@@ -1,2 +1,2 @@
 # Algebraic-Expression-Parser
-Help to control and handle any algebraic expression and perform popular expression operations like getting postfix, prefix, and expression tree.
+Control and manage any algebraic expression, as well as do common expression operations such as getting postfix, prefix, and expression tree.
