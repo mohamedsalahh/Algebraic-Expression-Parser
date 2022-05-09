@@ -14,7 +14,3 @@ Control and manage any algebraic expression, as well as do common expression ope
 pip install binarytree
 ```
 
-# How to use
- '''
- from AlgebraicExpressionParser import Expression
- '''
