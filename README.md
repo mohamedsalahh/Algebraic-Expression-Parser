@@ -10,4 +10,4 @@ Control and manage any algebraic expression, as well as do common expression ope
 
 # Requirements
 - binarytree
-  'pip install binarytree '
+**pip install binarytree**
