@@ -15,11 +15,11 @@ class Expression:
                  unwritten_operator: str = None
                  ) -> None:
         """
-        expression: string represents the expression.
-        operators: set of strings "one character" represent operators that the expression contains.
-        operands: set of strings "one character" represent operands that the expression contains.
-        operators_info: dict that its key is an operator and its value is a tuple of the operator's type "unary (1) or binary(2)" and the operator weight. -> {'+' : (1,3)}
-        unwritten_operator: string represents an operator that cannot be written in the expression like Multiplication operator "*" in Elementary algebra.
+        expression: A string that represents the expression.
+        operators: A set of strings (a single character each) that represents the operators in the expression.
+        operands: A set of strings (a single character each) that represents the operands in the expression.
+        operators_info: A dictionary, where each key is an operator, and each value is a tuple. The tuple consists of two integers, the first is the operator's type (unary (1) or binary(2)), and the second is the operator's precedence. Example: {'+' : (1,3)}
+        unwritten_operator: A string that represents an operator that is usually not written in the expression like the multiplication operator "*" in elementary algebra.
         """
         expression = self._remove_spaces_from_expression(expression)
         self.expression = expression
@@ -45,7 +45,7 @@ class Expression:
             self._expression = expression
         else:
             raise TypeError(
-                f"expression should be a str. {expression} is {type(expression)}, not a str.")
+                f"expression has to be an str. {expression} is {type(expression)}, not an str.")
 
     @property
     def operators(self) -> set:
@@ -57,7 +57,7 @@ class Expression:
             self._operators = operators
         else:
             raise TypeError(
-                f"operators should be a set. {operators} is {type(operators)}, not a set.")
+                f"operators has to be a set. {operators} is {type(operators)}, not a set.")
 
     @property
     def operands(self) -> set:
@@ -69,7 +69,7 @@ class Expression:
             self._operands = operands
         else:
             raise TypeError(
-                f"operands should be a set. {operands} is {type(operands)}, not a set.")
+                f"operands has to be a set. {operands} is {type(operands)}, not a set.")
 
     @property
     def operators_info(self) -> dict:
@@ -81,7 +81,7 @@ class Expression:
             self._operators_info = operators_info
         else:
             raise TypeError(
-                f"operators_info should be a dict. {operators_info} is {type(operators_info)}, not a dict.")
+                f"operators_info has to be a dict. {operators_info} is {type(operators_info)}, not a dict.")
 
     def __str__(self) -> str:
         return f"{self.expression}"
@@ -123,7 +123,7 @@ class Expression:
 
     @staticmethod
     def _are_pairs(c1: str, c2: str) -> bool:
-        """Return True if two brackets from the same type."""
+        """Return True if the two brackets are the same type."""
         if c2 == "}" and c1 == "{":
             return True
         elif c2 == ")" and c1 == "(":
@@ -139,32 +139,32 @@ class Expression:
         return self._calc_weight(c1) > self._calc_weight(c2)
 
     def _validate_operators_info(self) -> None: 
-        """Raise an error if operators info are invalid."""
+        """Raise an error if operators' info are not valid."""
         for operator in self.operators:
             if not isinstance(operator, str) or len(operator) != 1:
                 raise InvalidOperatorException(
-                    f"{operator} is invalid. should be str and one character.")
+                    f"{operator} is not valid. has to be be an str and a single character.")
             if operator not in self.operators_info.keys():
                 raise MissingOperatorsInfoException(
-                    f"{self.expression} opeators' info are missing.")
+                    f"{self.expression} operators' info are missing.")
             else:
                 if not isinstance(self.operators_info[operator], tuple):
                     raise TypeError(
-                        f"operators_info[key] should be a tuple. {self.operators_info[operator]} is {type(self.operators_info[operator])}, not tuple.")
+                        f"operators_info[key] has to be a tuple. {self.operators_info[operator]} is {type(self.operators_info[operator])}, not tuple.")
                 else:
                     if len(self.operators_info[operator]) != 2:
                         raise MissingOperatorsInfoException(
-                            f"{self.expression} opeators' info are missing.")
+                            f"{self.expression} operators' info is missing.")
                     else:
                         if self.operators_info[operator][0] not in [1, 2]:
                             raise InvalidOperatorTypeException(
-                                f"{operator} has unvalid type. it should be (2)-> binary or (1)-> unary.")
+                                f"{operator}'s type is not valid. it has to be (2)-> binary or (1)-> unary.")
                         if not isinstance(self.operators_info[operator][1], int):
                             raise TypeError(
-                                f"{operator}'s precedence should be int. {self.operators_info[operator][1]} is {type(self.operators_info[operator][1])} not int.")
+                                f"{operator}'s precedence has to be an int. {self.operators_info[operator][1]} is {type(self.operators_info[operator][1])} not an int.")
 
     def _validate_parenthesis(self) -> None:
-        """Raise an error if expression's parenthesis are invalid."""
+        """Raise an error if expression's parenthesis are not valid."""
         stack = []
         for c in self.expression:
             if self._is_open_bracket(c):
@@ -172,21 +172,21 @@ class Expression:
             elif self._is_close_bracket(c):
                 if not stack:
                     raise InvalidParenthesesException(
-                        f"{self.expression}'s Parentheses is not balanced.")
+                        f"{self.expression}'s parenthesis are not balanced.")
                 if self._are_pairs(stack[-1], c):
                     stack.pop()
                 else:
                     raise InvalidParenthesesException(
-                        f"{self.expression}'s Parentheses is not balanced.")
+                        f"{self.expression}'s parenthesis are not balanced.")
         if stack:
             raise InvalidParenthesesException(
-                f"{self.expression}'s Parentheses is not balanced.")
+                f"{self.expression}'s parenthesis are not balanced.")
 
     def _validate_Expression(self, expression: str) -> None:
-        """Raise an error if expression is invalid."""
+        """Raise an error if expression is not valid."""
         if expression == "":
             raise InvalidExpressionException(
-                f"{self.expression} is invalid expression.")
+                f"{self.expression} is not a valid expression.")
         sz = len(expression)
         is_previous_character_operand = False
         i = 0
@@ -194,7 +194,7 @@ class Expression:
             if self._is_open_bracket(expression[i]):
                 if is_previous_character_operand:
                     raise InvalidExpressionException(
-                        f"{self.expression} is invalid expression.")
+                        f"{self.expression} is not a valid expression.")
                 open_brackets_count = 0
                 idx = i
 
@@ -207,7 +207,7 @@ class Expression:
                     idx += 1
                     if idx >= sz:
                         raise InvalidParenthesesException(
-                            f"{self.expression}'s Parentheses is not balanced.")
+                            f"{self.expression}'s parenthesis are not balanced.")
 
                 self._validate_Expression(expression[i + 1: idx])
 
@@ -216,32 +216,32 @@ class Expression:
 
             elif self._is_close_bracket(expression[i]):
                 raise InvalidParenthesesException(
-                    f"{self.expression}'s Parentheses is not balanced.")
+                    f"{self.expression}'s parenthesis are not balanced.")
 
             elif self.is_operand(expression[i]):
                 if is_previous_character_operand:
                     raise InvalidExpressionException(
-                        f"{self.expression} is invalid expression.")
+                        f"{self.expression} is not a valid expression.")
                 is_previous_character_operand = True
 
             elif self.is_unary_operator(expression[i]):
                 if not is_previous_character_operand:
                     raise InvalidExpressionException(
-                        f"{self.expression} is invalid")
+                        f"{self.expression} is not valid")
 
             elif self.is_binary_operator(expression[i]):
                 if not is_previous_character_operand:
                     raise InvalidExpressionException(
-                        f"{self.expression} is invalid expression.")
+                        f"{self.expression} is not a valid expression.")
                 is_previous_character_operand = False
 
             i += 1
         if not is_previous_character_operand:
             raise InvalidExpressionException(
-                f"{self.expression} is invalid expression.")
+                f"{self.expression} is not a valid expression.")
 
     def validate(self) -> bool:
-        """Return True if expression is Valid."""
+        """Return True if expression is valid."""
         self._validate_operators_info()
         self._validate_parenthesis()
         self._validate_Expression(self.expression)
@@ -249,7 +249,7 @@ class Expression:
         return True
 
     def postfix(self) -> str:
-        """Return the expression postfix."""
+        """Return the postfix form for the expression."""
         postfix = ""
         operators_stack = []
         for c in self.expression:
@@ -273,7 +273,7 @@ class Expression:
         return postfix
     
     def prefix(self) -> str:
-        """Return the expression pretfix."""
+        """Return the prefix form for the expression."""
         temp_expression = self.expression
         self.expression = self.expression[::-1]
 
@@ -291,10 +291,7 @@ class Expression:
         return prefix
 
     def tree(self) -> Node:
-        """
-            Return the expression tree.
-            Node is a class from binarytree library.
-        """
+        """Return the expression tree."""
         postfix = self.postfix()
         stack = []
         for c in postfix:
@@ -308,7 +305,7 @@ class Expression:
         return stack.pop()
 
     def _insert_operator(self) -> None:
-        """insert operator symbol between operands. ab(a) -> a&b&(a)."""
+        """insert an operator's symbol between operands. Example: ab(a) -> a&b&(a)."""
         i = 0
         while i < len(self.expression)-1:
 
@@ -331,7 +328,7 @@ class Expression:
         self.validate()
     
     def get_operands(self) -> set:
-        """Return set of all symbols in the expression."""
+        """Return set that contains all symbols in the expression."""
         symbols = set()
         for c in self.expression:
             if self.is_operand(c):
@@ -357,7 +354,7 @@ class Expression:
         return operators
 
     def get_operator_info(self, operator: str) -> Tuple[int, int]:
-        """Return an info of operator."""
+        """Return the info of an operator."""
         return self.operators_info[operator]
 
     def add_operator(self) -> None:

@@ -1,24 +1,24 @@
 
 class InvalidExpressionException(Exception):
-    """The expression is not valid. operators or operands are missing."""
+    """The expression is not valid. Some operators or operands are missing."""
 
     pass
 
 
 class InvalidParenthesesException(Exception):
-    """The expression's Parentheses is not balanced."""
+    """The parenthesis are not balanced in the expression."""
 
     pass
 
 
 class MissingOperatorsInfoException(Exception):
-    """The expression operators's info are missing."""
+    """The operator info is missing."""
 
     pass
 
 
 class InvalidUnwrittenOperatorException(Exception):
-    """The Unwritten operator is not valid."""
+    """The unwritten operator is not valid."""
 
     pass
 
@@ -30,6 +30,6 @@ class InvalidOperatorException(Exception):
 
 
 class InvalidOperatorTypeException(Exception):
-    """The operator type is not valid. not binary or unary."""
+    """The operator type is not valid (not binary and not unary)."""
 
     pass
