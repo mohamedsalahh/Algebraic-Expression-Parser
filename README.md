@@ -6,13 +6,6 @@ Control and handle any algebraic expression, as well as do common expression ope
 from AlgebraicExpressionParser import Expression
 ```
 
-# Limitations of this version
-- Accepts only variables and one charcter operands.
-- Accepts only one charcter operators.
-- Accepts only unray and binary operators.
-- Accepts only postfix unary operators.
-
-
 # Requirements
 - binarytree
 ```
