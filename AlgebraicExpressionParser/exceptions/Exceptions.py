@@ -17,14 +17,20 @@ class MissingOperatorsInfoException(Exception):
     pass
 
 
-class InvalidUnwrittenOperatorException(Exception):
-    """The unwritten operator is not valid."""
+class InvalidOperatorException(Exception):
+    """The operator is not valid."""
 
     pass
 
 
-class InvalidOperatorException(Exception):
-    """The operator is not valid."""
+class InvalidOperatorAssociativityException(Exception):
+    """The operator associativity is not valid."""
+
+    pass
+
+
+class InvalidVariableException(Exception):
+    """The variable is not valid."""
 
     pass
 

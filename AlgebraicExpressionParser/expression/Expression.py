@@ -1,6 +1,6 @@
 import copy
 from binarytree import Node
-from typing import Dict, Set, Tuple
+from typing import Dict, List, Set, Tuple
 from AlgebraicExpressionParser.exceptions.Exceptions import *
 
 
@@ -10,30 +10,26 @@ class Expression:
     def __init__(self, *,
                  expression: str,
                  operators: Set[str],
-                 operands: Set[str] = None,
+                 variables: Set[str] = None,
                  operators_info: Dict[str, Tuple[int, int]],
-                 unwritten_operator: str = None
+                 operators_associativity: Dict[str, str],
                  ) -> None:
         """
         expression: A string that represents the expression.
         operators: A set of strings (a single character each) that represents the operators in the expression.
-        operands: A set of strings (a single character each) that represents the operands in the expression.
+        variables: A set of strings (a single character each) that represents the variables in the expression. Example X, Y, V
         operators_info: A dictionary, where each key is an operator, and each value is a tuple. The tuple consists of two integers, the first is the operator's type (unary (1) or binary(2)), and the second is the operator's precedence. Example: {'+' : (1,3)}
-        unwritten_operator: A string that represents an operator that is usually not written in the expression like the multiplication operator "*" in elementary algebra.
+        operators_associativity: A dictionary, where each key is an operator, and each value is its associativity.
         """
         expression = self._remove_spaces_from_expression(expression)
         self.expression = expression
         self.operators = copy.copy(operators)
-        self.operands = copy.copy(operands)
+        self.variables = copy.copy(variables)
         self.operators_info = copy.deepcopy(operators_info)
-        self.unwritten_operator = unwritten_operator
+        self.operators_associativity = copy.copy(operators_associativity)
 
-        if self.unwritten_operator:
-            if self.unwritten_operator not in self.operators:
-                raise InvalidUnwrittenOperatorException(
-                    f"{self.unwritten_operator} is not a valid operator.")
-            self._insert_operator()
-        self.validate()
+        self._tokenize()
+        self._validate()
 
     @property
     def expression(self) -> str:
@@ -46,7 +42,6 @@ class Expression:
         else:
             raise TypeError(
                 f"expression has to be an str. {expression} is {type(expression)}, not an str.")
-
     @property
     def operators(self) -> set:
         return self._operators
@@ -58,19 +53,17 @@ class Expression:
         else:
             raise TypeError(
                 f"operators has to be a set. {operators} is {type(operators)}, not a set.")
-
     @property
-    def operands(self) -> set:
-        return self._operands
+    def variables(self) -> set:
+        return self._variables
 
-    @operands.setter
-    def operands(self, operands: set) -> None:
-        if isinstance(operands, set) or operands == None:
-            self._operands = operands
+    @variables.setter
+    def variables(self, variables: set) -> None:
+        if isinstance(variables, set) or variables == None:
+            self._variables = variables
         else:
             raise TypeError(
-                f"operands has to be a set. {operands} is {type(operands)}, not a set.")
-
+                f"variables has to be a set. {variables} is {type(variables)}, not a set.")
     @property
     def operators_info(self) -> dict:
         return self._operators_info
@@ -82,6 +75,24 @@ class Expression:
         else:
             raise TypeError(
                 f"operators_info has to be a dict. {operators_info} is {type(operators_info)}, not a dict.")
+    @property
+    def operators_associativity(self) -> dict:
+        return self._operators_associativity
+
+    @operators_associativity.setter
+    def operators_associativity(self, operators_associativity: dict) -> None:
+        if isinstance(operators_associativity, dict):
+            self._operators_associativity = operators_associativity
+        else:
+            raise TypeError(
+                f"unary_operators_associativity has to be a dict. {operators_associativity} is {type(operators_associativity)}, not a dict.")
+    @property
+    def tokens(self) -> List[str]:
+        return self._tokens
+
+    @tokens.setter
+    def tokens(self, tokens: List[str]) -> None:
+        self._tokens = tokens
 
     def __str__(self) -> str:
         return f"{self.expression}"
@@ -99,10 +110,15 @@ class Expression:
             return False
         return self.operators_info[c][0] == 1
 
+    def is_variable(self, c: str) -> bool:
+        if self.variables:
+            return c in self.variables
+        return False
+
     def is_operand(self, c: str) -> bool:
-        if self.operands:
-            return c in self.operands
-        return not self.is_binary_operator(c) and not self.is_unary_operator(c) and not self._is_close_bracket(c) and not self._is_open_bracket(c)
+        if c.isdigit():
+            return True
+        return self.is_variable(c)
 
     @staticmethod
     def _is_open_bracket(c: str) -> bool:
@@ -118,32 +134,57 @@ class Expression:
         return expression
 
     @staticmethod
-    def _insert(string: str, index: int, c: str) -> str:
-        return string[:index] + c + string[index:]
-
-    @staticmethod
-    def _are_pairs(c1: str, c2: str) -> bool:
+    def _are_pairs(bracket1: str, bracket2: str) -> bool:
         """Return True if the two brackets are the same type."""
-        if c2 == "}" and c1 == "{":
+        if bracket2 == "}" and bracket1 == "{":
             return True
-        elif c2 == ")" and c1 == "(":
+        elif bracket2 == ")" and bracket1 == "(":
             return True
-        elif c2 == "]" and c1 == "[":
+        elif bracket2 == "]" and bracket1 == "[":
             return True
         return False
 
-    def _calc_weight(self, c: str) -> int:
-        return self.operators_info[c][1]
+    def _has_higher_precedence(self, operator1: str, operator2: str) -> bool:
+        return self.operators_info[operator1][1] > self.operators_info[operator2][1]
 
-    def _has_higher_precedence(self, c1: str, c2: str) -> bool:
-        return self._calc_weight(c1) > self._calc_weight(c2)
+    def _tokenize(self) -> None:
+        """Split the expression into tokens"""
 
-    def _validate_operators_info(self) -> None: 
-        """Raise an error if operators' info are not valid."""
+        separators = ['(', ')', '{', '}', '[', ']']
+        separators.extend(self.get_operators())
+        separators.sort(key=len, reverse=True)
+
+        def separate(expression: List[str]) -> List[str]:
+            for separator in separators:
+                for i, subexpression in enumerate(expression):
+                    if subexpression in separators:
+                        continue
+
+                    subexpression = subexpression.split(separator)
+
+                    sz = len(subexpression)
+                    idx = 1
+                    while idx < sz:
+                        subexpression.insert(idx, separator)
+                        idx += 2
+                        sz += 1
+
+                    idx = i+1
+                    for s in subexpression:
+                        if s == '':
+                            continue
+                        expression.insert(idx, s)
+                        idx += 1
+                    expression.pop(i)
+            return expression
+        self.tokens = separate([self.expression])
+
+    def _validate_operators(self) -> None:
+        """Raise an error if operators are not valid."""
         for operator in self.operators:
-            if not isinstance(operator, str) or len(operator) != 1:
+            if not isinstance(operator, str):
                 raise InvalidOperatorException(
-                    f"{operator} is not valid. has to be be an str and a single character.")
+                    f"{operator} is not valid. has to be be an str.")
             if operator not in self.operators_info.keys():
                 raise MissingOperatorsInfoException(
                     f"{self.expression} operators' info are missing.")
@@ -163,10 +204,31 @@ class Expression:
                             raise TypeError(
                                 f"{operator}'s precedence has to be an int. {self.operators_info[operator][1]} is {type(self.operators_info[operator][1])} not an int.")
 
+    def _validate_variables(self) -> None:
+        """Raise an error if variables are not valid."""
+        if not self.variables:
+            return
+        for variable in self.variables:
+            if not isinstance(variable, str):
+                raise TypeError(
+                    f"variable has to be a str. {variable} is {type(variable)}, not str.")
+            if len(variable) > 1:
+                raise InvalidVariableException(f"{variable}'s has to be 1")
+
+    def _validate_operators_associativity(self) -> None:
+        """Raise an error if operators_associativity is not valid."""
+        for operator in self.operators:
+            if operator not in self.operators_associativity.keys():
+                raise MissingOperatorsInfoException(
+                    f"{operator}'s associativity is missing.")
+            if self.operators_associativity[operator] != 'LR' and self.operators_associativity[operator] != 'RL':
+                raise InvalidOperatorAssociativityException(
+                    f"{operator}'s associativity is not valid")
+
     def _validate_parenthesis(self) -> None:
         """Raise an error if expression's parenthesis are not valid."""
         stack = []
-        for c in self.expression:
+        for c in self.tokens:
             if self._is_open_bracket(c):
                 stack.append(c)
             elif self._is_close_bracket(c):
@@ -182,16 +244,16 @@ class Expression:
             raise InvalidParenthesesException(
                 f"{self.expression}'s parenthesis are not balanced.")
 
-    def _validate_Expression(self, expression: str) -> None:
+    def _validate_Expression(self, tokens: List[str]) -> None:
         """Raise an error if expression is not valid."""
-        if expression == "":
+        if not tokens:
             raise InvalidExpressionException(
                 f"{self.expression} is not a valid expression.")
-        sz = len(expression)
+        sz = len(tokens)
         is_previous_character_operand = False
         i = 0
         while i < sz:
-            if self._is_open_bracket(expression[i]):
+            if self._is_open_bracket(tokens[i]):
                 if is_previous_character_operand:
                     raise InvalidExpressionException(
                         f"{self.expression} is not a valid expression.")
@@ -199,95 +261,111 @@ class Expression:
                 idx = i
 
                 # Find its close bracket
-                while open_brackets_count != 1 or not Expression._is_close_bracket(expression[idx]):
-                    if self._is_open_bracket(expression[idx]):
+                while open_brackets_count != 1 or not self._is_close_bracket(tokens[idx]):
+                    if self._is_open_bracket(tokens[idx]):
                         open_brackets_count += 1
-                    if self._is_close_bracket(expression[idx]):
+                    if self._is_close_bracket(tokens[idx]):
                         open_brackets_count -= 1
                     idx += 1
                     if idx >= sz:
                         raise InvalidParenthesesException(
                             f"{self.expression}'s parenthesis are not balanced.")
 
-                self._validate_Expression(expression[i + 1: idx])
+                self._validate_Expression(tokens[i + 1: idx])
 
                 i = idx
                 is_previous_character_operand = True
 
-            elif self._is_close_bracket(expression[i]):
+            elif self._is_close_bracket(tokens[i]):
                 raise InvalidParenthesesException(
                     f"{self.expression}'s parenthesis are not balanced.")
 
-            elif self.is_operand(expression[i]):
+            elif self.is_operand(tokens[i]):
                 if is_previous_character_operand:
                     raise InvalidExpressionException(
                         f"{self.expression} is not a valid expression.")
                 is_previous_character_operand = True
 
-            elif self.is_unary_operator(expression[i]):
-                if not is_previous_character_operand:
-                    raise InvalidExpressionException(
-                        f"{self.expression} is not valid")
+            elif self.is_unary_operator(tokens[i]):
+                if self.operators_associativity[tokens[i]] == 'LR':
+                    if not is_previous_character_operand:
+                        raise InvalidExpressionException(
+                            f"{self.expression} is not valid")
+                else:
+                    if is_previous_character_operand:
+                        raise InvalidExpressionException(
+                            f"{self.expression} is not a valid expression.")
 
-            elif self.is_binary_operator(expression[i]):
+            elif self.is_binary_operator(tokens[i]):
                 if not is_previous_character_operand:
                     raise InvalidExpressionException(
                         f"{self.expression} is not a valid expression.")
                 is_previous_character_operand = False
+            else:
+                raise InvalidExpressionException(
+                    f"{self.expression} is not a valid expression.")
 
             i += 1
         if not is_previous_character_operand:
             raise InvalidExpressionException(
                 f"{self.expression} is not a valid expression.")
 
-    def validate(self) -> bool:
+    def _validate(self) -> bool:
         """Return True if expression is valid."""
-        self._validate_operators_info()
+        self._validate_operators()
+        self._validate_operators_associativity()
+        self._validate_variables()
         self._validate_parenthesis()
-        self._validate_Expression(self.expression)
+        self._validate_Expression(self.tokens)
 
         return True
 
-    def postfix(self) -> str:
+    def postfix(self) -> List[str]:
         """Return the postfix form for the expression."""
-        postfix = ""
+        postfix = []
         operators_stack = []
-        for c in self.expression:
+        for c in self.tokens:
             if self.is_operand(c):
-                postfix += c
+                postfix.append(c)
             elif self.is_binary_operator(c) or self.is_unary_operator(c):
                 while operators_stack and not self._is_open_bracket(operators_stack[-1]) and self._has_higher_precedence(operators_stack[-1], c):
-                    postfix += operators_stack[-1]
+                    postfix.append(operators_stack[-1])
                     operators_stack.pop()
                 operators_stack.append(c)
             elif self._is_open_bracket(c):
                 operators_stack.append(c)
             elif self._is_close_bracket(c):
                 while not self._is_open_bracket(operators_stack[-1]):
-                    postfix += operators_stack[-1]
+                    postfix.append(operators_stack[-1])
                     operators_stack.pop()
                 operators_stack.pop()
         while operators_stack:
-            postfix += operators_stack[-1]
+            postfix.append(operators_stack[-1])
             operators_stack.pop()
         return postfix
-    
+
     def prefix(self) -> str:
         """Return the prefix form for the expression."""
-        temp_expression = self.expression
-        self.expression = self.expression[::-1]
+        temp_tokens = self.tokens
+        self.tokens = self.tokens[::-1]
 
-        expression = ""
-        for c in self.expression:
+        for idx, c in enumerate(self.tokens):
             if c == "(":
-                expression += ")"
+                self.tokens[idx] = ")"
             elif c == ")":
-                expression += "("
+                self.tokens[idx] = "("
+            elif c == "{":
+                self.tokens[idx] = "}"
+            elif c == "}":
+                self.tokens[idx] = "{"
+            elif c == "[":
+                self.tokens[idx] = "]"
+            elif c == "]":
+                self.tokens[idx] = "["
             else:
-                expression += c
-        self.expression = expression 
+                self.tokens[idx] = c
         prefix = self.postfix()[::-1]
-        self.expression = temp_expression
+        self.tokens = temp_tokens
         return prefix
 
     def tree(self) -> Node:
@@ -300,39 +378,21 @@ class Expression:
                 node.right = stack.pop()
                 node.left = stack.pop()
             elif self.is_unary_operator(c):
-                node.left = stack.pop()
+                if self.operators_associativity[c] == "LR":
+                    node.left = stack.pop()
+                else:
+                    node.right = stack.pop()
             stack.append(node)
         return stack.pop()
-
-    def _insert_operator(self) -> None:
-        """insert an operator's symbol between operands. Example: ab(a) -> a&b&(a)."""
-        i = 0
-        while i < len(self.expression)-1:
-
-            if self.is_operand(self.expression[i]) and (self.is_operand(self.expression[i+1]) or self._is_open_bracket(self.expression[i+1])):
-                self.expression = self._insert(
-                    self.expression, i+1, self.unwritten_operator)
-
-            elif self._is_close_bracket(self.expression[i]) and (self.is_operand(self.expression[i+1]) or self._is_open_bracket(self.expression[i+1])):
-                self.expression = self._insert(
-                    self.expression, i+1, self.unwritten_operator)
-
-            elif self.is_unary_operator(self.expression[i]) and (self.is_operand(self.expression[i+1]) or self._is_open_bracket(self.expression[i+1])):
-                self.expression = self._insert(
-                    self.expression, i+1, self.unwritten_operator)
-            i += 1
 
     def update_operator_info(self, *, operator: str, operator_info: Tuple[int, int]) -> None:
         """Update the info of an operator."""
         self.operators_info[operator] = operator_info
         self.validate()
-    
+
     def get_operands(self) -> set:
         """Return set that contains all symbols in the expression."""
-        symbols = set()
-        for c in self.expression:
-            if self.is_operand(c):
-                symbols.add(c)
+        symbols = {symbol for symbol in self.tokens if self.is_operand(symbol)}
         return symbols
 
     def get_binary_operators(self) -> set:
