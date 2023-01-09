@@ -13,7 +13,5 @@ setup(
     author_email='mohamed.s636499@gmail.com',
     license='MIT',
     keywords='Algebraic Expression Parser',
-    install_requires=[
-          'binarytree',
-      ],
+    install_requires=[],
 )
