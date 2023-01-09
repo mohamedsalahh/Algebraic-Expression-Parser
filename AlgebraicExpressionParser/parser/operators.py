@@ -181,9 +181,4 @@ class Operators:
         #     return operator1.associativity == Operator.ltr
         # return operator1.precedence > operator2.precedence
         return (operator2.associativity == Operator.ltr and operator2.precedence <= operator1.precedence) or (operator2.associativity == Operator.rtl and operator2.precedence < operator1.precedence)
- 
-        '''
-        op2 is ltr op2.p <= op1.p
-        or
-        op2 is rtl op2.p < op1.p
-        '''
+    
