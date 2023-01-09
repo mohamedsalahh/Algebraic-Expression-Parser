@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='Algebraic-Expression-Parser',
-    version='0.0.1',
+    version='0.0.3',
     DESCRIPTION = 'Algebraic Expression Parser',
     LONG_DESCRIPTION = 'Control and handle any algebraic expression, as well as do common expression operations such as getting postfix, prefix, and expression tree.',
     url='https://github.com/mohamedsalahh/Algebraic-Expression-Parser',
@@ -13,7 +13,5 @@ setup(
     author_email='mohamed.s636499@gmail.com',
     license='MIT',
     keywords='Algebraic Expression Parser',
-    install_requires=[
-          'binarytree',
-      ],
+    install_requires=[],
 )
