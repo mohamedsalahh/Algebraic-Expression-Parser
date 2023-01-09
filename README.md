@@ -79,27 +79,29 @@ parser.syntax_tree('(-3) * (x^3)').postorder()
 
 
 ### New in version 0.0.4
-  #### Escape charcter ($)
-    ##### Any charcter after it will be handled as variable even if it is a space (only one character, for variables with more than one character use special_variables parameter).
-    ##### The characters after it has higher precedence than operators.
-    ```python
-    parser.postfix('$+ + x')
-    ```
-    ```text
-    >>> ['$', '+', 'x', '+']
-    ```
-  #### Special Variables
-    ##### A list represents variables other than predefined ones(constants and one symbol variables)
-    ##### They has lower precedence than operators.
-    
-    ```python
-    parser = ExpressionParser(operators, special_variables = {'_'})
-    ```
-    ```python
-    parser.postfix('_ * x')
-    ```
-    ```text
-    >>> ['_', 'x', '*']
-    ```
+#### Escape charcter ($)
+- Any charcter after it will be handled as variable even if it is a space (only one character, for variables with more than one character use special_variables parameter).
+- The characters after it has higher precedence than operators.
+     
+     
+```python
+parser.postfix('$+ + x')
+```
+```text
+>>> ['$', '+', 'x', '+']
+```
+#### Special Variables
+- A list represents variables other than predefined ones(constants and one symbol variables)
+- They has lower precedence than operators.
+
+```python
+parser = ExpressionParser(operators, special_variables = {'_'})
+```
+```python
+parser.postfix('_ * x')
+```
+```text
+>>> ['_', 'x', '*']
+```
     
     
