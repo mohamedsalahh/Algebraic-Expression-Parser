@@ -235,7 +235,6 @@ class ExpressionParser:
         stack = deque()
         i = 0
         while i < len(postfix):
-            print(stack)
             node = Node(postfix[i])
             if isinstance(postfix[i], Operator):
                 node = Node(postfix[i].symbol)
