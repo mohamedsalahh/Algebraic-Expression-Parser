@@ -92,7 +92,7 @@ parser.postfix('$+ + x')
 ```
 #### Special Variables
 - A list represents variables other than predefined ones(constants and one symbol variables)
-- They has lower precedence than operators.
+- They have lower precedence than operators.
 
 ```python
 parser = ExpressionParser(operators, special_variables = {'_'})
