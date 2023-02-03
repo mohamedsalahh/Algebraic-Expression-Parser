@@ -81,7 +81,7 @@ parser.syntax_tree('(-3) * (x^3)').postorder()
 ### New in version 0.0.4
 #### Escape charcter ($)
 - Any charcter after it will be handled as variable even if it is a space (only one character, for variables with more than one character use special_variables parameter).
-- The characters after it has higher precedence than operators.
+- Characters after it has higher precedence than operators.
      
      
 ```python
